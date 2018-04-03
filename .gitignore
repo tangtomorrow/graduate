@@ -3,3 +3,5 @@ target/
 .idea/
 
 *.iml
+
+data/step[0-9]

@@ -10,7 +10,6 @@ import tech.tablesaw.api.Table;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,9 +20,6 @@ import java.util.stream.Collectors;
  * @date 2018-04-02 23:30
  */
 public class Step2 {
-    private static final DateTimeFormatter srcFormatter = DateTimeFormatter.ofPattern("yyyy-M-d H:mm:ss");
-    private static final DateTimeFormatter dstFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
     public static void main(String[] args) throws IOException {
         List<Station> match = Step1.getMatchStations();
         match.stream()
@@ -49,34 +45,33 @@ public class Step2 {
 
         // 根据原始的time列计算新列
         DateTimeColumn formatDateTime = new DateTimeColumn("local_date_time");
-        table.categoryColumn("time").forEach(s -> formatDateTime.append(LocalDateTime.parse(s, srcFormatter)));
+        table.categoryColumn("time").forEach(s -> formatDateTime.append(LocalDateTime.parse(s, Config.FORMATTER1)));
 
-        CategoryColumn formatTimeStr = new CategoryColumn("formatted_time");
-        formatDateTime.forEach(localDateTime -> formatTimeStr.append(localDateTime.format(dstFormatter)));
-
-        IntColumn day = new IntColumn("day");
-        formatDateTime.forEach(localDateTime -> day.append(localDateTime.minusHours(1).getDayOfMonth()));
-
-        IntColumn hour = new IntColumn("hour");
-        formatDateTime.forEach(localDateTime -> hour.append(localDateTime.minusHours(1).getHour() + 1));
+        DateTimeColumn formatTimeColumn = new DateTimeColumn("formatted_time");
+        IntColumn dayColumn = new IntColumn("day");
+        IntColumn hourColumn = new IntColumn("hour");
+        IntColumn indexColumn = new IntColumn("index");
+        formatDateTime.forEach(
+                localDateTime -> {
+                    int day = localDateTime.minusHours(1).getDayOfMonth();
+                    int hour = localDateTime.minusHours(1).getHour() + 1;
+                    int index = (day - 1) * 24 + hour;
+                    dayColumn.append(day);
+                    hourColumn.append(hour);
+                    indexColumn.append(index);
+                    formatTimeColumn.append(localDateTime);
+                });
 
         // 将新增的列加入原始表格
-        table.addColumn(1, formatTimeStr);
-        table.addColumn(2, day);
-        table.addColumn(3, hour);
+        table.addColumn(0, indexColumn);
+        table.addColumn(2, formatTimeColumn);
+        table.addColumn(3, dayColumn);
+        table.addColumn(4, hourColumn);
 
-        table.retainColumns("time", "formatted_time", "day", "hour", "temperature", "wind_speed_2m");
-
-        // 删除不关注的列
-        /*
-        List<String> targetColNames = Lists.newArrayList("time", "formatted_time", "day", "hour", "temperature", "wind_speed_2m");
-        table.columnNames().stream()
-                .filter(it -> !targetColNames.contains(it))
-                .forEach(table::removeColumns);
-                */
+        table.retainColumns("index", "time", "formatted_time", "day", "hour", "temperature", "wind_speed_2m");
 
         // 删除首行，并排序
-        table = table.dropRow(0).sortAscendingOn("formatted_time");
+        table = table.dropRow(0).sortAscendingOn("index");
         // 写入目标文件路径
         table.write().csv(dstFilePath);
 

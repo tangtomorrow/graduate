@@ -1,5 +1,6 @@
 package blinking.model;
 
+import java.math.BigDecimal;
 import java.util.Objects;
 
 public class Station {
@@ -8,10 +9,10 @@ public class Station {
     private double lat; // 纬度
     private double cap;
     private int type;
-    private double svf;
+    private BigDecimal svf;
     private String district;
 
-    public Station(String name, double lon, double lat, double cap, int type, double svf, String district) {
+    public Station(String name, double lon, double lat, double cap, int type, BigDecimal svf, String district) {
         this.name = name;
         this.lon = lon;
         this.lat = lat;
@@ -41,7 +42,7 @@ public class Station {
         return type;
     }
 
-    public double getSvf() {
+    public BigDecimal getSvf() {
         return svf;
     }
 
@@ -69,8 +70,8 @@ public class Station {
                 Double.compare(station.lat, lat) == 0 &&
                 Double.compare(station.cap, cap) == 0 &&
                 type == station.type &&
-                Double.compare(station.svf, svf) == 0 &&
                 Objects.equals(name, station.name) &&
+                Objects.equals(svf, station.svf) &&
                 Objects.equals(district, station.district);
     }
 

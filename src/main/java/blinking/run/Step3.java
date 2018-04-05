@@ -1,7 +1,10 @@
 package blinking.run;
 
 import blinking.config.Config;
+import blinking.model.Station;
 import blinking.model.StationDetail;
+import blinking.parser.StationParser;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -9,7 +12,9 @@ import tech.tablesaw.api.FloatColumn;
 import tech.tablesaw.api.Table;
 import tech.tablesaw.util.Selection;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,7 +23,7 @@ import java.util.stream.Collectors;
 import static tech.tablesaw.api.QueryHelper.column;
 
 /**
- * Step3. 验证
+ * Step3. 验证-插值
  *
  * @author tangym
  * @date 2018-04-04 18:15
@@ -45,23 +50,52 @@ public class Step3 {
                 .forEach(s -> copy(Config.STEP2_STATION_DETAIL_PATH + s, Config.STEP3_STATION_DETAIL_PATH + s));
 
         // 找出不满足要求的station文件名，插值并同样拷贝到step3文件夹
+        System.out.println("-----------------需要插值的站点如下----------------");
         List<String> missStationNames = stations.stream()
                 .filter(stationDetail -> !Config.EX_STATION_NAMES.contains(stationDetail.getStation().getName()))
                 .map(StationDetail::getTable)
                 .filter(table -> !Step3.checkDataCols(table))
+                .peek(Step3::viewMiss)
                 .map(Table::name)
                 .collect(Collectors.toList());
-        missStationNames.forEach(s -> {
-            Table table = null;
-            try {
-                table = Table.read().csv(Config.STEP2_STATION_DETAIL_PATH + s);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            viewMiss(table);
-        });
-        System.out.println("----------------------------------------------");
+
+        System.out.println("-------------------开始进行插值--------------");
         missStationNames.forEach(s -> fillAndCopy(Config.STEP2_STATION_DETAIL_PATH + s, Config.STEP3_STATION_DETAIL_PATH + s));
+
+        System.out.println("-------------------校验并生成最终匹配信息表--------------");
+        boolean flag2 = stations.stream()
+                .filter(stationDetail -> !Config.EX_STATION_NAMES.contains(stationDetail.getStation().getName()))
+                .filter(stationDetail ->
+                        !new File(Config.STEP3_STATION_DETAIL_PATH + stationDetail.getStation().getName() + ".csv").exists()
+                )
+                .map(StationDetail::getTable)
+                .allMatch(Step3::checkDataCols);
+        System.out.println("check " + flag2);
+
+        List<StationDetail> stationDetails = stations.stream()
+                .filter(stationDetail -> !Config.EX_STATION_NAMES.contains(stationDetail.getStation().getName()))
+                .collect(Collectors.toList());
+        writeMatch(stationDetails);
+    }
+
+    private static void writeMatch(List<StationDetail> stationDetails) {
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(Config.STEP3_STATION_MATCH_PATH));
+            bw.write("name,lon,lat,cap,type,svf,district");
+            bw.newLine();
+            stationDetails.forEach(station -> {
+                try {
+                    bw.write(station.getStation().toString());
+                    bw.newLine();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            bw.flush();
+            bw.close();
+        } catch (IOException e) {
+            throw new RuntimeException("error in writeMatch", e);
+        }
     }
 
     private static void copy(String srcPath, String dstPath) {
@@ -95,9 +129,9 @@ public class Step3 {
                 for (short hour = 1; hour <= 24; hour++) {
                     Table t = table.selectWhere(column("day").isEqualTo(day)).selectWhere(column("hour").isEqualTo(hour));
                     if (t.isEmpty()) {
-                        boolean flag = fillWithDays(table, day, hour);
+                        boolean flag = fillWithHours(table, day, hour);
                         if (!flag) {
-                            fillWithHours(table, day, hour);
+                            //fillWithDays(table, day, hour);
                         }
                     }
                 }
@@ -189,5 +223,23 @@ public class Step3 {
             sb.append("[").append(joiner.join(list)).append("]");
             System.out.println(sb.toString());
         }
+    }
+
+    public static List<StationDetail> gets() {
+        StationParser parser = new StationParser();
+        try {
+            List<Station> stations = parser.parse(Config.STEP3_STATION_MATCH_PATH, true);
+            return stations.stream().map((Function<Station, StationDetail>) station -> {
+                try {
+                    return new StationDetail(station, Table.read().csv(Config.STEP3_STATION_DETAIL_PATH + station.getName() + ".csv"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }).collect(Collectors.toList());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

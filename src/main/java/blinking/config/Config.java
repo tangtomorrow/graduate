@@ -19,6 +19,7 @@ public class Config {
 
     public static final String STEP2_STATION_DETAIL_PATH = PARENT_PTH + "step2/stations_detail/";
 
+    public static final String STEP3_STATION_MATCH_PATH = PARENT_PTH + "step3/stations.csv";
     public static final String STEP3_STATION_DETAIL_PATH = PARENT_PTH + "step3/stations_detail/";
 
     // 完整的数据行数
@@ -27,8 +28,15 @@ public class Config {
     public static final DateTimeFormatter Formatter2 = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     // 由于数据缺失，需要排除的地点
-    public static final List<String> EX_STATION_NAMES = Lists.newArrayList("东滩公园",
-            "真新", "黄兴公园", "世博公园","朱桥", "水上运动场", "毛桥", "浦江光继村", "九段沙");
+    public static final List<String> EX_STATION_NAMES = Lists.newArrayList(
+            // 风速均为0
+            "东滩公园",
+            // 缺失太多，无法插值
+            "真新", "黄兴公园", "世博公园", "朱桥", "水上运动场", "毛桥", "浦江光继村", "九段沙",
+            // 部分只能靠7/9月份的数据进行插值，感觉跨天不太准确
+            "安亭", "奉贤", "四团中学", "浏河",
+            // 需要靠前后两天同一时刻均值做插值的站点
+            "曹路", "济阳公园", "中山公园", "凌桥", "侯家镇", "石洞口", "五厍", "体育场", "西部渔村");
     //public static final List<String> EX_STATION_NAMES = Lists.newArrayList("凌桥", "石洞口");
 
     public static void init() {

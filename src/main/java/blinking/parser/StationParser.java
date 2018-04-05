@@ -7,6 +7,7 @@ import com.google.common.io.Files;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -27,7 +28,7 @@ public class StationParser {
                     Double.parseDouble(strs.get(2).trim()),
                     Double.parseDouble(strs.get(3).trim()),
                     Integer.parseInt(strs.get(4).trim()),
-                    Double.parseDouble(strs.get(5).trim().replace("%", "")) / 100.0,
+                    new BigDecimal(strs.get(5).trim().replace("%", "")),
                     strs.get(6).trim()) : null;
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }

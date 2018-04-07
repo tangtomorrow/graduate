@@ -26,9 +26,10 @@ public class Step4New {
 
     public static void main(String[] args) throws IOException {
         Table data = conbine();
-        a(data);
-        b(data);
-        c(data);
+        //a(data);
+        //b(data);
+        //c(data);
+        d(data);
     }
 
     /**
@@ -105,6 +106,30 @@ public class Step4New {
                         e.printStackTrace();
                     }
                 });
+    }
+
+    /**
+     * uhii
+     *
+     * @param data
+     */
+    private static void d(Table data) throws IOException {
+        // 先计算type为5的所有站点所有天所有小时的平均温度
+        double type5TemperatureMean = data.selectWhere(column("type").isEqualTo(5))
+                .floatColumn("temperature").mean();
+        System.out.println(type5TemperatureMean);
+
+        //Table table = Table.create("day-temperature-detail");
+        Table t = data.selectWhere(column("type").isIn(1, 2, 3, 4));
+        t.retainColumns("name", "day", "hour", "temperature");
+        System.out.println(t.selectWhere(column("name").isEqualTo("徐家汇")).selectWhere(column("day").isEqualTo(2))
+                .selectWhere(column("hour").isEqualTo(21)).print());
+        NumericColumn newCol = t.floatColumn("temperature").subtract(type5TemperatureMean);
+        newCol.setName("UHII");
+        t.addColumn(newCol);
+        System.out.println(t.selectWhere(column("name").isEqualTo("徐家汇")).selectWhere(column("day").isEqualTo(2))
+                .selectWhere(column("hour").isEqualTo(21)).print());
+        t.write().csv(Config.STEP4_NEW_PARENT_PATH + "UHII.csv");
     }
 
     private static Table conbine() throws IOException {

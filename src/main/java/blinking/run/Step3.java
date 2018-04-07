@@ -231,7 +231,7 @@ public class Step3 {
             List<Station> stations = parser.parse(Config.STEP3_STATION_MATCH_PATH, true);
             return stations.stream().map((Function<Station, StationDetail>) station -> {
                 try {
-                    return new StationDetail(station, Table.read().csv(Config.STEP3_STATION_DETAIL_PATH + station.getName() + ".csv"));
+                    return new StationDetail(station, Table.read().csv(Config.STEP3_STATION_DETAIL_PATH + station.getName() + ".csv").setName(station.getName()));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

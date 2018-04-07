@@ -28,6 +28,12 @@
         </dependency>
 
         <dependency>
+            <groupId>tech.tablesaw</groupId>
+            <artifactId>tablesaw-plot</artifactId>
+            <version>0.12.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>

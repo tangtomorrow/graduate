@@ -8,6 +8,7 @@ import tech.tablesaw.api.*;
 import tech.tablesaw.table.TemporaryView;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.IntConsumer;
@@ -58,6 +59,32 @@ public class Step4New {
      * @param data
      */
     private static void aNew(Table data) throws IOException {
+        Arrays.asList("temperature", "wind_speed_2m")
+                .forEach(colName -> {
+                    Table table = data.groupBy("day")
+                            .getSubTables()
+                            .stream()
+                            .map(TemporaryView::asTable)
+                            .sorted(Comparator.comparingInt(o -> Integer.parseInt(o.name())))
+                            .peek(t -> t.retainColumns("name", "hour", colName))
+                            .map(tSorted -> tSorted.sortOn("name", "hour"))
+                            .reduce((t1, t2) -> {
+                                check(t1, t2, "name", "hour");
+                                t1.addColumn(t2.floatColumn(colName).setName(t2.name()));
+                                return t1;
+                            })
+                            .get();
+                    table.floatColumn(colName).setName("1");
+                    try {
+                        table.write().csv(Config.STEP4_NEW_PARENT_PATH + "day-" + colName + "-detail-withRowNames.csv");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println(table);
+                });
+
+
+        /*
         Table table = data.groupBy("day")
                 .getSubTables()
                 .stream()
@@ -74,6 +101,7 @@ public class Step4New {
         table.floatColumn("temperature").setName("1");
         table.write().csv(Config.STEP4_NEW_PARENT_PATH + "day-temperature-detail-withRowNames.csv");
         System.out.println(table);
+        */
     }
 
     /**
@@ -159,6 +187,36 @@ public class Step4New {
      * @param data
      */
     private static void cNew(Table data) throws IOException {
+        Arrays.asList("temperature", "wind_speed_2m")
+                .forEach(colName -> {
+                    List<Integer> types = Lists.newArrayList(1, 2, 3, 4, 5);
+                    types.forEach(
+                            type -> {
+                                Table table = data.selectWhere(column("type").isEqualTo(type))
+                                        .groupBy("day")
+                                        .getSubTables()
+                                        .stream()
+                                        .map(TemporaryView::asTable)
+                                        .sorted(Comparator.comparingInt(o -> Integer.parseInt(o.name())))
+                                        .peek(t -> t.retainColumns("name", "hour", colName))
+                                        .map(tSorted -> tSorted.sortOn("name", "hour"))
+                                        .reduce((t1, t2) -> {
+                                            check(t1, t2, "name", "hour");
+                                            t1.addColumn(t2.floatColumn(colName).setName(t2.name()));
+                                            return t1;
+                                        })
+                                        .get();
+                                table.floatColumn(colName).setName("1");
+                                try {
+                                    table.write().csv(Config.STEP4_NEW_PARENT_PATH + "type" + type + "-day-" + colName + "-detail-withRowNames.csv");
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                System.out.println(table);
+                            });
+                });
+
+        /*
         List<Integer> types = Lists.newArrayList(1, 2, 3, 4, 5);
         types.forEach(
                 type -> {
@@ -184,7 +242,7 @@ public class Step4New {
                     }
                     System.out.println(table);
                 });
-
+                */
     }
 
     /**

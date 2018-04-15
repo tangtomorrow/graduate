@@ -140,6 +140,7 @@ public class Step3 {
             if (table.rowCount() != Config.ROW_COUNT) {
                 viewMiss(table);
             } else {
+                table  = table.sortOn("index");
                 table.write().csv(dstPath);
             }
         } catch (IOException e) {

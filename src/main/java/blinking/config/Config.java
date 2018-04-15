@@ -25,6 +25,7 @@ public class Config {
     public static final String STEP4_PARENT_PATH = PARENT_PTH + "step4/";
     public static final String STEP4_NEW_PARENT_PATH = PARENT_PTH + "step4new/";
     public static final String STEP5_PARENT_PATH = PARENT_PTH + "step5/";
+    public static final String STEP5_STATION_DETAIL_PATH = PARENT_PTH + "step5/stations_detail/";
 
     // 完整的数据行数
     public static final int ROW_COUNT = 31 * 24;
@@ -74,7 +75,7 @@ public class Config {
             f4new.mkdirs();
         }
 
-        File f5 = new File(STEP5_PARENT_PATH);
+        File f5 = new File(STEP5_STATION_DETAIL_PATH);
         if (!f5.exists()) {
             f5.mkdirs();
         }
